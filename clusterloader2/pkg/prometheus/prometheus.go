@@ -88,6 +88,7 @@ func InitFlags(p *config.PrometheusConfig) {
 	flags.BoolEnvVar(&p.ScrapeWindowsNodeExporter, "prometheus-scrape-windows-node-exporter", "PROMETHEUS_SCRAPE_WINDOWS_NODE_EXPORTER", false, "Whether to scrape Windows node exporter metrics.")
 	flags.BoolEnvVar(&p.ScrapeKubelets, "prometheus-scrape-kubelets", "PROMETHEUS_SCRAPE_KUBELETS", false, "Whether to scrape kubelets (nodes + master). Experimental, may not work in larger clusters. Requires heapster node to be at least n1-standard-4, which needs to be provided manually.")
 	flags.BoolEnvVar(&p.ScrapeMasterKubelets, "prometheus-scrape-master-kubelets", "PROMETHEUS_SCRAPE_MASTER_KUBELETS", false, "Whether to scrape kubelets running on master nodes.")
+	flags.BoolEnvVar(&p.ScrapeCrio, "prometheus-scrape-crio", "PROMETHEUS_SCRAPE_CRIO", false, "Whether to scrape CRI-O metrics.")
 	flags.BoolEnvVar(&p.ScrapeKubeProxy, "prometheus-scrape-kube-proxy", "PROMETHEUS_SCRAPE_KUBE_PROXY", true, "Whether to scrape kube proxy.")
 	flags.StringEnvVar(&p.KubeProxySelectorKey, "prometheus-kube-proxy-selector-key", "PROMETHEUS_KUBE_PROXY_SELECTOR_KEY", "component", "Label key used to scrape kube proxy.")
 	flags.BoolEnvVar(&p.ScrapeKubeStateMetrics, "prometheus-scrape-kube-state-metrics", "PROMETHEUS_SCRAPE_KUBE_STATE_METRICS", false, "Whether to scrape kube-state-metrics. Only run occasionally.")
@@ -212,6 +213,7 @@ func NewController(clusterLoaderConfig *config.ClusterLoaderConfig) (pc *Control
 	mapping["PROMETHEUS_SCRAPE_METRICS_SERVER_METRICS"] = clusterLoaderConfig.PrometheusConfig.ScrapeMetricsServerMetrics
 	mapping["PROMETHEUS_SCRAPE_KUBELETS"] = clusterLoaderConfig.PrometheusConfig.ScrapeKubelets
 	mapping["PROMETHEUS_SCRAPE_MASTER_KUBELETS"] = clusterLoaderConfig.PrometheusConfig.ScrapeKubelets || clusterLoaderConfig.PrometheusConfig.ScrapeMasterKubelets
+	mapping["PROMETHEUS_SCRAPE_CRIO"] = clusterLoaderConfig.PrometheusConfig.ScrapeCrio
 	mapping["PROMETHEUS_APISERVER_SCRAPE_PORT"] = clusterLoaderConfig.PrometheusConfig.APIServerScrapePort
 	mapping["PROMETHEUS_STORAGE_CLASS_PROVISIONER"] = clusterLoaderConfig.PrometheusConfig.StorageClassProvisioner
 	mapping["PROMETHEUS_STORAGE_CLASS_VOLUME_TYPE"] = clusterLoaderConfig.PrometheusConfig.StorageClassVolumeType

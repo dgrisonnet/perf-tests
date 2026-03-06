@@ -36,6 +36,8 @@
 {{$CUSTOM_ALLOWED_CONTAINER_RESTARTS := DefaultParam .CL2_CUSTOM_ALLOWED_CONTAINER_RESTARTS ""}}
 {{$NODE_LOCAL_DNS_LATENCY_THRESHOLD := DefaultParam .CL2_NODE_LOCAL_DNS_LATENCY_THRESHOLD "5s"}}
 {{$PROMETHEUS_SCRAPE_KUBE_PROXY := DefaultParam .PROMETHEUS_SCRAPE_KUBE_PROXY true}}
+{{$PROMETHEUS_SCRAPE_CRIO := DefaultParam .PROMETHEUS_SCRAPE_CRIO false}}
+{{$PROMETHEUS_SCRAPE_KUBELETS := DefaultParam .PROMETHEUS_SCRAPE_KUBELETS false}}
 {{$PROMETHEUS_SCRAPE_KUBE_STATE_METRICS := DefaultParam .PROMETHEUS_SCRAPE_KUBE_STATE_METRICS false}}
 {{$PROMETHEUS_SCRAPE_METRICS_SERVER_METRICS := DefaultParam .PROMETHEUS_SCRAPE_METRICS_SERVER_METRICS false}}
 {{$PROBE_MEASUREMENTS_PING_SLEEP_DURATION := DefaultParam .CL2_PROBE_MEASUREMENTS_PING_SLEEP_DURATION "1s"}}
@@ -132,6 +134,83 @@ steps:
     Method: MetricsServerPrometheus
     Params:
       action: {{$action}}
+{{end}}
+{{if $PROMETHEUS_SCRAPE_KUBELETS}}
+  - Identifier: KubeletCPU
+    Method: GenericPrometheusQuery
+    Params:
+      action: {{$action}}
+      metricName: Kubelet CPU
+      metricVersion: v1
+      unit: cores
+      queries:
+      - name: Perc99
+        query: quantile_over_time(0.99, avg(rate(process_cpu_seconds_total{job="kubelet"}[1m]))[%v:])
+      - name: Perc90
+        query: quantile_over_time(0.90, avg(rate(process_cpu_seconds_total{job="kubelet"}[1m]))[%v:])
+      - name: Perc50
+        query: quantile_over_time(0.50, avg(rate(process_cpu_seconds_total{job="kubelet"}[1m]))[%v:])
+  - Identifier: KubeletMemory
+    Method: GenericPrometheusQuery
+    Params:
+      action: {{$action}}
+      metricName: Kubelet Memory
+      metricVersion: v1
+      unit: MiB
+      queries:
+      - name: Perc99
+        query: quantile_over_time(0.99, avg(process_resident_memory_bytes{job="kubelet"} / 1024 / 1024)[%v:])
+      - name: Perc90
+        query: quantile_over_time(0.90, avg(process_resident_memory_bytes{job="kubelet"} / 1024 / 1024)[%v:])
+      - name: Perc50
+        query: quantile_over_time(0.50, avg(process_resident_memory_bytes{job="kubelet"} / 1024 / 1024)[%v:])
+  - Identifier: KubeletRequestLatency
+    Method: GenericPrometheusQuery
+    Params:
+      action: {{$action}}
+      metricName: Kubelet Request Latency
+      metricVersion: v1
+      unit: s
+      dimensions:
+      - path
+      - server_type
+      queries:
+      - name: Perc99
+        query: histogram_quantile(0.99, sum(rate(kubelet_http_requests_duration_seconds_bucket[%v])) by (path, server_type, le))
+      - name: Perc90
+        query: histogram_quantile(0.90, sum(rate(kubelet_http_requests_duration_seconds_bucket[%v])) by (path, server_type, le))
+      - name: Perc50
+        query: histogram_quantile(0.50, sum(rate(kubelet_http_requests_duration_seconds_bucket[%v])) by (path, server_type, le))
+{{end}}
+{{if $PROMETHEUS_SCRAPE_CRIO}}
+  - Identifier: CrioCPU
+    Method: GenericPrometheusQuery
+    Params:
+      action: {{$action}}
+      metricName: CRI-O CPU
+      metricVersion: v1
+      unit: cores
+      queries:
+      - name: Perc99
+        query: quantile_over_time(0.99, avg(rate(process_cpu_seconds_total{job="crio"}[1m]))[%v:])
+      - name: Perc90
+        query: quantile_over_time(0.90, avg(rate(process_cpu_seconds_total{job="crio"}[1m]))[%v:])
+      - name: Perc50
+        query: quantile_over_time(0.50, avg(rate(process_cpu_seconds_total{job="crio"}[1m]))[%v:])
+  - Identifier: CrioMemory
+    Method: GenericPrometheusQuery
+    Params:
+      action: {{$action}}
+      metricName: CRI-O Memory
+      metricVersion: v1
+      unit: MiB
+      queries:
+      - name: Perc99
+        query: quantile_over_time(0.99, avg(process_resident_memory_bytes{job="crio"} / 1024 / 1024)[%v:])
+      - name: Perc90
+        query: quantile_over_time(0.90, avg(process_resident_memory_bytes{job="crio"} / 1024 / 1024)[%v:])
+      - name: Perc50
+        query: quantile_over_time(0.50, avg(process_resident_memory_bytes{job="crio"} / 1024 / 1024)[%v:])
 {{end}}
 
 {{if $ENABLE_API_AVAILABILITY_MEASUREMENT}}

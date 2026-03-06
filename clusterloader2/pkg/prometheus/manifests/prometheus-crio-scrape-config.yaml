@@ -1,0 +1,22 @@
+{{$PROMETHEUS_SCRAPE_CRIO := DefaultParam .PROMETHEUS_SCRAPE_CRIO false}}
+
+{{if $PROMETHEUS_SCRAPE_CRIO}}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: crio-scrape-config
+  namespace: monitoring
+stringData:
+  crio-scrape-config.yaml: |
+    - job_name: crio
+      kubernetes_sd_configs:
+        - role: node
+      relabel_configs:
+        - action: replace
+          replacement: "${1}:9090"
+          target_label: __address__
+          regex: (.+?)(?::\d+)?
+          source_labels: [__address__]
+      scheme: http
+      scrape_interval: 30s
+{{end}}
